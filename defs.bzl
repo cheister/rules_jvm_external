@@ -28,7 +28,8 @@ def maven_install(
         generate_compat_repositories = False,
         version_conflict_policy = "default",
         maven_install_json = None,
-        override_targets = {}):
+        override_targets = {},
+        resolve_timeout = 600):
     """Resolves and fetches artifacts transitively from Maven repositories.
 
     This macro runs a repository rule that invokes the Coursier CLI to resolve
@@ -95,6 +96,7 @@ def maven_install(
         generate_compat_repositories = generate_compat_repositories,
         version_conflict_policy = version_conflict_policy,
         override_targets = override_targets,
+        resolve_timeout = resolve_timeout,
     )
 
     if maven_install_json != None:

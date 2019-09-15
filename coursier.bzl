@@ -39,6 +39,9 @@ _COURSIER_PACKAGING_TYPES = [
     "eclipse-plugin",
     "orbit",
     "test-jar",
+    "hk2-jar",
+    "maven-plugin",
+    "scala-jar",
 ]
 
 def _strip_packaging_and_classifier(coord):
@@ -655,7 +658,7 @@ def _coursier_fetch_impl(repository_ctx):
         cmd.extend(["--parallel", "1"])
 
     repository_ctx.report_progress("Resolving and fetching the transitive closure of %s artifact(s).." % len(artifact_coordinates))
-    exec_result = repository_ctx.execute(cmd)
+    exec_result = repository_ctx.execute(cmd, timeout=repository_ctx.attr.resolve_timeout)
     if (exec_result.return_code != 0):
         fail("Error while fetching artifact with coursier: " + exec_result.stderr)
 
@@ -688,7 +691,7 @@ def _coursier_fetch_impl(repository_ctx):
                 if part == "http" or part == "https":
                      protocol = part
             if protocol == None:
-                fail("Only artifacts downloaded over http(s) are supported: %s" % artifact["coord"]) 
+                fail("Only artifacts downloaded over http(s) are supported: %s" % artifact["coord"])
             primary_url_parts.extend([protocol, "://"])
             for part in filepath_parts[filepath_parts.index(protocol) + 1:]:
                 primary_url_parts.extend([part, "/"])
@@ -706,8 +709,8 @@ def _coursier_fetch_impl(repository_ctx):
             # The repository for the primary_url has to be one of the repositories provided through
             # maven_install. Since Maven artifact URLs are standardized, we can make the `http_file`
             # targets more robust by replicating the primary url for each specified repository url.
-            # 
-            # It does not matter if the artifact is on a repository or not, since http_file takes 
+            #
+            # It does not matter if the artifact is on a repository or not, since http_file takes
             # care of 404s.
             #
             # If the artifact does exist, Bazel's HttpConnectorMultiplexer enforces the SHA-256 checksum
@@ -726,7 +729,7 @@ def _coursier_fetch_impl(repository_ctx):
                 if primary_url.find(url) != -1:
                     primary_repository_url = url
                     primary_artifact_path = primary_url[len(primary_repository_url):]
-            mirror_urls = [url + primary_artifact_path for url in repository_urls] 
+            mirror_urls = [url + primary_artifact_path for url in repository_urls]
             artifact.update({"mirror_urls": mirror_urls})
 
             # Compute the sha256 of the file.
@@ -873,6 +876,7 @@ coursier_fetch = repository_rule(
         ),
         "maven_install_json": attr.label(allow_single_file = True),
         "override_targets": attr.string_dict(default = {}),
+        "resolve_timeout": attr.int(default = 600),
     },
     environ = [
         "JAVA_HOME",
