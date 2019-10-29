@@ -329,7 +329,10 @@ def _coursier_fetch_impl(repository_ctx):
             # Undo any `,classifier=` suffix from `utils.artifact_coordinate`.
             cmd.extend(["--force-version", coord.split(",classifier=")[0]])
     cmd.extend(["--artifact-type", ",".join(SUPPORTED_PACKAGING_TYPES + ["src"])])
-    cmd.append("--quiet")
+    if repository_ctx.os.environ.get("RULES_JVM_EXTERNAL_DEBUG"):
+        cmd.append("--verbose")
+    else:
+        cmd.append("--quiet")
     cmd.append("--no-default")
     cmd.extend(["--json-output-file", "dep-tree.json"])
 
@@ -359,6 +362,10 @@ def _coursier_fetch_impl(repository_ctx):
         cmd.extend(["--parallel", "1"])
 
     repository_ctx.report_progress("Resolving and fetching the transitive closure of %s artifact(s).." % len(artifact_coordinates))
+
+    if repository_ctx.os.environ.get("RULES_JVM_EXTERNAL_DEBUG"):
+        print("Coursier command: {}".format(cmd))
+
     exec_result = repository_ctx.execute(cmd, timeout = repository_ctx.attr.resolve_timeout)
     if (exec_result.return_code != 0):
         fail("Error while fetching artifact with coursier: " + exec_result.stderr)
