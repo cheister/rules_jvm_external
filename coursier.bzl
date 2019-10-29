@@ -361,7 +361,7 @@ def _coursier_fetch_impl(repository_ctx):
         # happen on *nix.
         cmd.extend(["--parallel", "1"])
 
-    repository_ctx.report_progress("Resolving and fetching the transitive closure of %s artifact(s).." % len(artifact_coordinates))
+    repository_ctx.report_progress("Resolving the transitive closure of %s artifact(s).." % len(artifact_coordinates))
 
     if repository_ctx.os.environ.get("RULES_JVM_EXTERNAL_DEBUG"):
         print("Coursier command: {}".format(cmd))
